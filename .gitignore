@@ -1,0 +1,8 @@
+embedding_model/
+.idea/
+__pycache__/
+scratch/
+data/
+*.csv
+*.env
+.DS_Store
