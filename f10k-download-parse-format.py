@@ -9,7 +9,6 @@ import re
 import pandas as pd
 from bs4 import BeautifulSoup
 from pandas import DataFrame
-from secedgar import filings, FilingType
 
 
 def main() -> int:
@@ -34,9 +33,9 @@ def main() -> int:
     for ind, row in url_df.iterrows():
         count += 1
         print(f'--- Downloading {count:,} of {total:,} 10K filings for {row.name}')
-        raw_file_path, file_name = download_filing(row.form10KUrls, f'{user_name} {user_email}', temp_dir)
+        raw_file_path, file_id = download_filing(row.form10KUrls, f'{user_name} {user_email}', temp_dir)
         if len(raw_file_path) > 0:
-            output_file_path = os.path.join(output_dir, file_name)
+            output_file_path = os.path.join(output_dir, file_id + '.json')
             try:
                 load_parse_save(raw_file_path, output_file_path, row.cik)
                 os.remove(raw_file_path)
@@ -81,8 +80,8 @@ def download_filing(url: str, user_agent: str, temp_dir: str) -> tuple:
         file = io.StringIO(text)
         contents = file.read()
         file.close()
-        file_id = url[url.rindex('/') + 1:]
-        file_path = os.path.join(temp_dir, 'raw_' + file_id)
+        file_id = url[url.rindex('/') + 1:url.rindex('.')]
+        file_path = os.path.join(temp_dir, 'raw_' + file_id + '.txt')
         with open(file_path, 'w') as file:
             file.write(contents)
         return file_path, file_id
@@ -108,7 +107,7 @@ def extract_10_k(txt: str) -> str:
 
     # Type filter is interesting, it looks for <TYPE> with Not flag as new line, ie terminare there, with + sign
     # to look for any char afterwards until new line \n. This will give us <TYPE> followed Section Name like '10-K'
-    # Once we have have this, it returns String Array, below line will with find content after <TYPE> ie, '10-K'
+    # Once we have this, it returns String Array, below line will with find content after <TYPE> ie, '10-K'
     # as section names
     doc_types = [x[len('<TYPE>'):] for x in type_pattern.findall(txt)]
     # Create a loop to go through each section type and save only the 10-K section in the dictionary
