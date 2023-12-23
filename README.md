@@ -1,6 +1,8 @@
-# Data Preparation: SEC EDGAR
-### __:warning: This Repo is Work in Progress__
-This repository will contain scripts to download SEC EDGAR data and format it for Neo4j loading and analytics. Specifically linking together form 10-K and form 13 data.
+# Data Preparation & Experimentation: SEC EDGAR
+### __:warning: This Repo is Work in Progress :warning:__
+This repository will contain 2 things:
+1. scripts to download SEC EDGAR data and format it for Neo4j loading, analytics, and GenAI. Specifically linking together form 10-K and form 13 data.
+2. Exploratory notebooks and apps for testing loading and GenAI applications with the data.
 
 ## Background
 Linking form10K documents and issuing companies from form13 is non-trivial since the two data sources use different identifiers and the SEC EDGAR API provides no way to directly resolve between them.  form10k filings are identified under CIK, an SEC system id, while form13 use the CUSIP identifier, another industry standard id, for issuers.
@@ -15,16 +17,17 @@ These will be staged in a format conducive to loading into Neo4j and linking the
 
 
 ## Prerequisites
-You are required to have a CIK-CUSIP mapping csv file as input.  While you could use the one from the repo noted above [here](https://github.com/leoliu0/cik-cusip-mapping/blob/master/cik-cusip-maps.csv) it contains over 50k mapping which can take a while to process. It may be better to filter your own csv as appropriate by your use case. 
+You are required to have a CIK-CUSIP mapping csv file as input. If you do not have one and want to test out. see the `cik-sample-mapping.csv` file.  While you could use the [csv from the repo noted above](https://github.com/leoliu0/cik-cusip-mapping/blob/master/cik-cusip-maps.csv) it contains over 50k mappings which can take a while to process.
 
-[TODO] Python Package prereqs
+__[TODO] Add Python Package prereqs__
 
 ## Pulling and parsing text from form 10Ks
 Currently, there are two command line utilities for this.  Will need to combine into one as we clean up.
-1. `f10-get-urls.py` takes the cik-cusip mapping as input alon g with a date range and grabs the urls for raw 10k filings.  It then writes them to another csv.
+1. `f10-get-urls.py` takes the cik-cusip mapping as input along with a date range and grabs the urls for raw 10k filings.  It then writes them to another csv.
 2. `f10k-download-parse-format.py` takes the above output, downloads raw 10k files, parses out relevant 10K item text, and saves to json files. See __10K Notes__ below for more details on the reasoning behind parsing and item selection.
 
 ## Pulling and staging holdings data from form 13s
+__[TODO]__
 
 ## 10K Notes
 
