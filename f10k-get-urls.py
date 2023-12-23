@@ -43,7 +43,7 @@ def parse_args():
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-s', '--start-date', default='2022-01-01', help='Start date in the format yyyy-mm-dd')
     parser.add_argument('-e', '--end-date', default='2023-01-01', help='End date in the format yyyy-mm-dd')
-    parser.add_argument('-i', '--input-file', required=False, default='data/cik.csv',
+    parser.add_argument('-i', '--input-file', required=False, default='./cik-sample-mapping.csv',
                         help='Formatted cik dataframe to pull cik ids from')
     parser.add_argument('-o', '--output-file', required=False, default='data/cik-10k-urls.csv',
                         help='Local path to write cik dataframe with urls too.')
