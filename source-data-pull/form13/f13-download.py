@@ -24,8 +24,8 @@ def main() -> int:
 def parse_args():
     parser = argparse.ArgumentParser(description='Download raw form13s from EDGAR SEC',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('-s', '--start-date', default='2022-01-01', help='Start date in the format yyyy-mm-dd')
-    parser.add_argument('-e', '--end-date', default='2023-08-01', help='End date in the format yyyy-mm-dd')
+    parser.add_argument('-s', '--start-date', default='2022-12-31', help='Start date in the format yyyy-mm-dd')
+    parser.add_argument('-e', '--end-date', default='2023-12-22', help='End date in the format yyyy-mm-dd')
     parser.add_argument('-o', '--output-directory', default='data/form13-raw/',
                         help='Local directory to write forms to')
     args = parser.parse_args()
@@ -39,7 +39,7 @@ def download_date(date, output_dir):
     for path in form13_paths:
         try:
             filings = download_form13(path)
-            with open(os.path.join(output_dir, 'raw_' + str(date) + path.replace('/', '_').lower()), 'w') as file:
+            with open(os.path.join(output_dir, path.replace('/', '_')), 'w') as file:
                 file.write(filings)
         except Exception as e:
             print(e)
@@ -89,7 +89,7 @@ def parse_master_file(text):
 
 def download_form13(path):
     conn = http.client.HTTPSConnection('www.sec.gov')
-    conn.request('GET', path, headers={'User-Agent': 'Neo4j Ben.Lackey@Neo4j.com'})
+    conn.request('GET', path, headers={'User-Agent': 'Neo4j sales@neo4j.com'})
     response = conn.getresponse()
     data = response.read()
     conn.close()

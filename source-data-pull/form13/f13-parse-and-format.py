@@ -11,8 +11,9 @@ FILING_MANAGER_NAME_COL = 'managerName'
 FILING_MANAGER_CIK_COL = 'managerCik'
 REPORT_PERIOD_COL = 'reportCalendarOrQuarter'
 COMPANY_CUSIP_COL = 'cusip'
+COMPANY_CUSIP6_COL = 'cusip6'
 COMPANY_NAME_COL = 'companyName'
-SOURCE_ID_COL = 'sourceFilingId'
+SOURCE_ID_COL = 'source'
 VALUE_COL = 'value'
 SHARES_COL = 'shares'
 
@@ -66,6 +67,13 @@ def extract_investment_info(contents: str) -> str:
     return strip_ns(xmltodict.parse(xml))['informationTable']['infoTable']
 
 
+def estimate_cusip6(cusip: str) -> str:
+    # Padding of 3 zeros is suspect - likely has a padded zero. This is inconsistent among form13 filers
+    if cusip.startswith('000'):
+        return cusip.upper()[1:7]
+    return cusip.upper()[:6]
+
+
 def filter_and_format(info_tables: str, manager_cik: str, manager_name: str,
                       report_period: datetime.date) -> List[Dict]:
     res = []
@@ -88,7 +96,8 @@ def filter_and_format(info_tables: str, manager_cik: str, manager_name: str,
             res.append({FILING_MANAGER_CIK_COL: manager_cik,
                         FILING_MANAGER_NAME_COL: manager_name,
                         REPORT_PERIOD_COL: report_period,
-                        COMPANY_CUSIP_COL: info_table['cusip'],
+                        COMPANY_CUSIP_COL: info_table['cusip'].upper(),
+                        COMPANY_CUSIP6_COL: estimate_cusip6(info_table['cusip']),
                         COMPANY_NAME_COL: info_table['nameOfIssuer'],
                         VALUE_COL: info_table['value'].replace(' ', '') + '000',
                         SHARES_COL: info_table['shrsOrPrnAmt']['sshPrnamt']})
@@ -118,11 +127,11 @@ def parse_from_dir(directory_path: str):
                 with open(file_path, 'r') as file:
                     filing = extract_dicts(file.read())
                     tmp_filing_df = pd.DataFrame(filing)
-                    tmp_filing_df[SOURCE_ID_COL] = file_name
+                    tmp_filing_df[SOURCE_ID_COL] = 'https://sec.gov' + file_name.replace('_', '/')
                     filing_dfs.append(tmp_filing_df)
             except Exception as e:
                 print(e)
-                failures.append(file_name) 
+                failures.append(file_name)
     filing_df = pd.concat(filing_dfs, ignore_index=True)
     filing_df[REPORT_PERIOD_COL] = pd.to_datetime(filing_df[REPORT_PERIOD_COL]).dt.date
     filing_df[VALUE_COL] = filing_df[VALUE_COL].astype(float)
@@ -136,9 +145,9 @@ def parse_from_dir(directory_path: str):
 # for our intents and purposes we will sum over values and shares to aggregate the duplicates out
 def aggregate_data(filings_df: pd.DataFrame) -> pd.DataFrame:
     print(f'=== Aggregating Parsed Data ===')
-    return filings_df.groupby([FILING_MANAGER_NAME_COL, REPORT_PERIOD_COL, COMPANY_CUSIP_COL]) \
-        .agg({VALUE_COL: sum, SHARES_COL: sum, SOURCE_ID_COL: max, COMPANY_NAME_COL: 'first'}) \
-        .reset_index()
+    return filings_df.groupby([SOURCE_ID_COL, FILING_MANAGER_CIK_COL, FILING_MANAGER_NAME_COL, REPORT_PERIOD_COL,
+                               COMPANY_CUSIP6_COL, COMPANY_CUSIP_COL]) \
+        .agg({COMPANY_NAME_COL: 'first', VALUE_COL: sum, SHARES_COL: sum}).reset_index()
 
 
 def filter_data(filings_df: pd.DataFrame, top_n_periods: int) -> pd.DataFrame:
