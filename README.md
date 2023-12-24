@@ -1,8 +1,8 @@
 # Data Preparation & Experimentation: SEC EDGAR
 ### __:warning: This Repo is Work in Progress :warning:__
 This repository will contain 2 things:
-1. scripts to download SEC EDGAR data and format it for Neo4j loading, analytics, and GenAI. Specifically linking together form 10-K and form 13 data.
-2. Exploratory notebooks and apps for testing loading and GenAI applications with the data.
+1. __[`source-data-pull`](source-data-pull)__: Scripts to download SEC EDGAR data and format it for Neo4j loading, analytics, and GenAI. Specifically linking together form 10-K and form 13 data.
+2. __[`exploration`](exploration)__:Exploratory notebooks and apps for testing loading and GenAI applications with the data.
 
 ## Background
 Linking form10K documents and issuing companies from form13 is non-trivial since the two data sources use different identifiers and the SEC EDGAR API provides no way to directly resolve between them.  form10k filings are identified under CIK, an SEC system id, while form13 use the CUSIP identifier, another industry standard id, for issuers.
@@ -16,19 +16,19 @@ In this project we will build off that work by taking a CIK-CUSIP mapping as inp
 These will be staged in a format conducive to loading into Neo4j and linking the data together.
 
 
-## Prerequisites
-You are required to have a CIK-CUSIP mapping csv file as input. If you do not have one and want to test out. see the `cik-sample-mapping.csv` file.  While you could use the [csv from the repo noted above](https://github.com/leoliu0/cik-cusip-mapping/blob/master/cik-cusip-maps.csv) it contains over 50k mappings which can take a while to process.
+## Prerequisites for Source Data Pull
+You are required to have a CIK-CUSIP mapping csv file as input. If you do not have one and want to test out. see the [`cik-sample-mapping.csv`](source-data-pull/form10k/cik-sample-mapping.csv) file.  While you could use the [csv from the repo noted above](https://github.com/leoliu0/cik-cusip-mapping/blob/master/cik-cusip-maps.csv) it contains over 50k mappings which can take a while to process.
 
 __[TODO] Add Python Package prereqs__
 
-## Pulling and parsing text from form 10Ks
+## Source Data Pull: Pulling and parsing text from form 10Ks
 Currently, there are two command line utilities for this.  Will need to combine into one as we clean up.
-1. `f10-get-urls.py` takes the cik-cusip mapping as input along with a date range and grabs the urls for raw 10k filings.  It then writes them to another csv.
-2. `f10k-download-parse-format.py` takes the above output, downloads raw 10k files, parses out relevant 10K item text, and saves to json files. See __10K Notes__ below for more details on the reasoning behind parsing and item selection.
 
-## Pulling and staging holdings data from form 13s
-__[TODO]__
+1. [`f10k-get-urls.py`](source-data-pull/form10k/f10k-get-urls.py) takes the cik-cusip mapping as input along with a date range and grabs the urls for raw 10k filings.  It then writes them to another csv.
+2. [`f10k-download-parse-format.py`](source-data-pull/form10k/f10k-download-parse-format.py) takes the above output, downloads raw 10k files, parses out relevant 10K item text, and saves to json files. See __10K Notes__ below for more details on the reasoning behind parsing and item selection.
 
+## Source Data Pull: Pulling and staging holdings data from form 13s
+There are two command line utilities for this. [`f13-download.py`](source-data-pull/form13/f13-download.py) for downloading the raw filings and [`f13-parse-and-format.py`](source-data-pull/form13/f13-parse-and-format.py) for parsing, formatting, and aggregating them into a csv.  These are split into two steps to facilitate faster iteration and experimentation. The download can take a while to run (several hours or more...an overnight type of run), so this way you can do that once then change anything needed on the parsing/formatting side. 
 ## 10K Notes
 
 A [10K](https://www.investor.gov/introduction-investing/investing-basics/glossary/form-10-k) is a comprehensive report filed annually by a publicly traded company about its financial performance and is required by the U.S. Securities and Exchange Commission (SEC). The report contains a comprehensive overview of the company's business and financial condition and includes audited financial statements. While 10Ks contain images and table figures, they primarily consist of free-form text which is what we are interested in extracting here.
