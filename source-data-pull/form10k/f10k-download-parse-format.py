@@ -37,7 +37,7 @@ def main() -> int:
         if len(raw_file_path) > 0:
             output_file_path = os.path.join(output_dir, file_id + '.json')
             try:
-                load_parse_save(raw_file_path, output_file_path, row.cik, row.form10KUrls)
+                load_parse_save(raw_file_path, output_file_path, row.cik, row.cusip6, row.form10KUrls)
                 os.remove(raw_file_path)
             except Exception as e:
                 print(e)
@@ -157,7 +157,7 @@ def extract_section_text(doc: str) -> Dict[str, str]:
     return res
 
 
-def load_parse_save(input_file_path: str, output_file_path: str, cik: str, url: str):
+def load_parse_save(input_file_path: str, output_file_path: str, cik: str, cusip6: str, url: str):
     with open(input_file_path, 'r') as file:
         raw_txt = file.read()
     print('Extracting 10-K')
@@ -165,6 +165,7 @@ def load_parse_save(input_file_path: str, output_file_path: str, cik: str, url: 
     print('Parsing relevant sections')
     cleaned_json_txt = extract_section_text(doc)
     cleaned_json_txt['cik'] = cik
+    cleaned_json_txt['cusip6'] = cusip6
     cleaned_json_txt['source'] = url[:url.rindex('.')] + '-index.htm'
     print('Writing clean text to json')
     with open(output_file_path, 'w') as json_file:
