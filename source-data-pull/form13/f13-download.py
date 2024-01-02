@@ -6,6 +6,9 @@ import math
 import csv
 import argparse
 
+from requests_ratelimiter import LimiterSession
+
+session = LimiterSession(per_second=10)
 
 def main() -> int:
     args = parse_args()
@@ -55,19 +58,21 @@ def get_form13_urls(date):
     print('The URL of the master file is ' + url)
 
     print('Downloading the master file...')
-    conn = http.client.HTTPSConnection('www.sec.gov')
-    conn.request('GET', path, headers={'User-Agent': 'Neo4j Ben.Lackey@Neo4j.com'})
-    response = conn.getresponse()
-    print(response.status, response.reason)
-    data = response.read()
-    conn.close()
-
-    if response.status == 200 and response.reason == 'OK':
-        text = data.decode('windows-1252')
+    # conn = http.client.HTTPSConnection('www.sec.gov')
+    # conn.request('GET', path, headers={'User-Agent': 'Neo4j Ben.Lackey@Neo4j.com'})
+    # response = conn.getresponse()
+    #data = response.read()
+    # conn.close()
+    response = session.get('https://www.sec.gov/' + path, headers={'User-Agent': 'Neo4j andreas.kollegger@neo4j.com'})
+    print(response.status_code)
+    
+    if response.status_code == 200: # and response.reason == 'OK':
+        # text = data.decode('windows-1252')
+        text = response.text
         form4_paths = parse_master_file(text)
         return form4_paths
     else:
-        print('Download failed for master file.')
+        print('Download failed for master file.', response.status_code)
         return []
 
 
@@ -88,22 +93,24 @@ def parse_master_file(text):
 
 
 def download_form13(path):
-    conn = http.client.HTTPSConnection('www.sec.gov')
-    conn.request('GET', path, headers={'User-Agent': 'Neo4j sales@neo4j.com'})
-    response = conn.getresponse()
-    data = response.read()
-    conn.close()
+    # conn = http.client.HTTPSConnection('www.sec.gov')
+    # conn.request('GET', path, headers={'User-Agent': 'Neo4j sales@neo4j.com'})
+    # response = conn.getresponse()
+    # data = response.read()
+    # conn.close()
+    response = session.get('https://www.sec.gov/' + path, headers={'User-Agent': 'Neo4j andreas.kollegger@neo4j.com'})
 
-    if response.status == 200 and response.reason == 'OK':
+    if response.status_code == 200: # and response.reason == 'OK':
         print('http://sec.gov' + path)
-        text = data.decode('utf-8')
+        # text = data.decode('utf-8')
+        text = response.text
         file = io.StringIO(text)
         contents = file.read()
         file.close()
         return contents
     else:
         print('Download failed for form13 file.')
-        print(response.status, response.reason)
+        print(response.status_code)
         return []
 
 
