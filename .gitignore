@@ -5,3 +5,5 @@ scratch/
 data/
 *.env
 .DS_Store
+.venv/
+relate.project.json

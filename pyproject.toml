@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "data-prep-sec-edgar"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+pandas = "^2.1.4"
+bs4 = "^0.0.1"
+lxml = "^5.0.0"
+requests-ratelimiter = "^0.4.2"
+xmltodict = "^0.13.0"
+langchain = "^0.0.353"
+python-dotenv = "^1.0.0"
+graphdatascience = "^1.8"
+openai = "^1.6.1"
+tiktoken = "^0.5.2"
+
+
+[tool.poetry.group.dev.dependencies]
+ipykernel = "^6.28.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
