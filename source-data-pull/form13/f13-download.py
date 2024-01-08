@@ -109,8 +109,7 @@ def download_form13(path):
         file.close()
         return contents
     else:
-        print('Download failed for form13 file.')
-        print(response.status_code)
+        print('Download failed for form13 file: HTTP ', response.status_code)
         return []
 
 
