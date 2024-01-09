@@ -1,3 +1,4 @@
+:auto
 MATCH (n)
 CALL { WITH n
   DETACH DELETE n
