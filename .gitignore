@@ -2,7 +2,7 @@ embedding_model/
 .idea/
 __pycache__/
 scratch/
-data/
+!data/
 *.env
 .DS_Store
 .venv/
