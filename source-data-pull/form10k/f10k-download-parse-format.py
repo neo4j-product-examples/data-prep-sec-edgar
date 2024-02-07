@@ -32,17 +32,23 @@ def main() -> int:
     print(f'=== Downloading {total:,} 10K filings ===')
     for ind, row in url_df.iterrows():
         count += 1
-        print(f'--- Downloading {count:,} of {total:,} 10K filings for {row.name}')
+        print(f'--- Downloading {count:,} of {total:,} 10K filings for {toList(row.names)}')
         raw_file_path, file_id = download_filing(row.form10KUrls, f'{user_name} {user_email}', temp_dir)
         if len(raw_file_path) > 0:
             output_file_path = os.path.join(output_dir, file_id + '.json')
             try:
-                load_parse_save(raw_file_path, output_file_path, row.cik, row.cusip6, row.form10KUrls)
+                load_parse_save(raw_file_path, output_file_path, row.cik, row.cusip6, row.form10KUrls, toList(row.cusip), toList(row.names))
                 os.remove(raw_file_path)
             except Exception as e:
                 print(e)
     return 0
 
+
+def stripSingleQuotesAndSpaces(s: str) -> str:
+    return s.strip("' ")
+
+def toList(asStr: str) -> List[str]:
+    return list(map(stripSingleQuotesAndSpaces, asStr.strip("{}").split(",")))
 
 def get_cik_url_df(formatted_data_path: str) -> DataFrame:
     res = pd.read_csv(formatted_data_path)
@@ -157,7 +163,7 @@ def extract_section_text(doc: str) -> Dict[str, str]:
     return res
 
 
-def load_parse_save(input_file_path: str, output_file_path: str, cik: str, cusip6: str, url: str):
+def load_parse_save(input_file_path: str, output_file_path: str, cik: str, cusip6: str, url: str, cusip:List[str], names: List[str]):
     with open(input_file_path, 'r') as file:
         raw_txt = file.read()
     print('Extracting 10-K')
@@ -166,6 +172,8 @@ def load_parse_save(input_file_path: str, output_file_path: str, cik: str, cusip
     cleaned_json_txt = extract_section_text(doc)
     cleaned_json_txt['cik'] = cik
     cleaned_json_txt['cusip6'] = cusip6
+    cleaned_json_txt['cusip'] = cusip
+    cleaned_json_txt['names'] = names
     cleaned_json_txt['source'] = url[:url.rindex('.')] + '-index.htm'
     print('Writing clean text to json')
     with open(output_file_path, 'w') as json_file:

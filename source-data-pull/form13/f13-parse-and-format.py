@@ -7,6 +7,7 @@ import os
 import re
 import xmltodict
 
+FILING_MANAGER_ADDRESS_COL = 'managerAddress'
 FILING_MANAGER_NAME_COL = 'managerName'
 FILING_MANAGER_CIK_COL = 'managerCik'
 REPORT_PERIOD_COL = 'reportCalendarOrQuarter'
@@ -58,8 +59,11 @@ def strip_ns(x):
 
 
 def extract_submission_info(contents: str) -> str:
+    namespaces = {
+        'http://www.sec.gov/edgar/common/': None, # skip this namespace
+    }
     xml = contents[1].split('</XML>')[0].strip()
-    return strip_ns(xmltodict.parse(xml))['edgarSubmission']
+    return strip_ns(xmltodict.parse(xml, process_namespaces=True, namespaces=namespaces))['edgarSubmission']
 
 
 def extract_investment_info(contents: str) -> str:
@@ -74,7 +78,7 @@ def estimate_cusip6(cusip: str) -> str:
     return cusip.upper()[:6]
 
 
-def filter_and_format(info_tables: str, manager_cik: str, manager_name: str,
+def filter_and_format(info_tables: str, manager_address: str, manager_cik: str, manager_name: str,
                       report_period: datetime.date) -> List[Dict]:
     res = []
     if isinstance(info_tables, dict):
@@ -87,20 +91,25 @@ def filter_and_format(info_tables: str, manager_cik: str, manager_name: str,
         if info_table['shrsOrPrnAmt']['sshPrnamtType'] != 'SH':
             pass
         # Only want holdings over $10m
-        elif (float(info_table['value']) * 1000) < 10000000:
-            pass
+        # elif (float(info_table['value']) * 1000) < 10000000:
+        #     pass
         # Only want common stock
-        elif info_table['titleOfClass'] != 'COM':
+        # elif info_table['titleOfClass'] != 'COM':
+        #     pass
+        elif "COM" not in info_table['titleOfClass'] and "CL" not in info_table['titleOfClass'] and "ORD" not in info_table['titleOfClass'] and "SHS" not in info_table["titleOfClass"] and "STOCK" not in info_table["titleOfClass"]:
+            #print("not common stock________", info_table['titleOfClass'], "___________",info_table['nameOfIssuer'])
             pass
         else:
-            res.append({FILING_MANAGER_CIK_COL: manager_cik,
-                        FILING_MANAGER_NAME_COL: manager_name,
-                        REPORT_PERIOD_COL: report_period,
-                        COMPANY_CUSIP_COL: info_table['cusip'].upper(),
-                        COMPANY_CUSIP6_COL: estimate_cusip6(info_table['cusip']),
-                        COMPANY_NAME_COL: info_table['nameOfIssuer'],
-                        VALUE_COL: info_table['value'].replace(' ', '') + '000',
-                        SHARES_COL: info_table['shrsOrPrnAmt']['sshPrnamt']})
+            res.append({
+                FILING_MANAGER_CIK_COL: manager_cik,
+                FILING_MANAGER_NAME_COL: manager_name,
+                FILING_MANAGER_ADDRESS_COL: manager_address,
+                REPORT_PERIOD_COL: report_period,
+                COMPANY_CUSIP_COL: info_table['cusip'].upper(),
+                COMPANY_CUSIP6_COL: estimate_cusip6(info_table['cusip']),
+                COMPANY_NAME_COL: info_table['nameOfIssuer'],
+                VALUE_COL: info_table['value'].replace(' ', '') + '000',
+                SHARES_COL: info_table['shrsOrPrnAmt']['sshPrnamt']})
     return res
 
 
@@ -109,9 +118,14 @@ def extract_dicts(txt: str) -> List[Dict]:
     submt_dict = extract_submission_info(contents)
     mng_cik = submt_dict['headerData']['filerInfo']['filer']['credentials']['cik']
     mng_name = submt_dict['formData']['coverPage']['filingManager']['name']
+    try:
+        mng_address = ", ".join(list(submt_dict['formData']['coverPage']['filingManager']['address'].values()))
+    except:
+        print(submt_dict['formData']['coverPage']['filingManager']['address'])
+        exit()
     report_period = submt_dict['formData']['coverPage']['reportCalendarOrQuarter']
     info_dict = extract_investment_info(contents)
-    return filter_and_format(info_dict, mng_cik, mng_name, report_period)
+    return filter_and_format(info_dict, mng_address, mng_cik, mng_name, report_period)
 
 
 def parse_from_dir(directory_path: str):
@@ -145,9 +159,9 @@ def parse_from_dir(directory_path: str):
 # for our intents and purposes we will sum over values and shares to aggregate the duplicates out
 def aggregate_data(filings_df: pd.DataFrame) -> pd.DataFrame:
     print(f'=== Aggregating Parsed Data ===')
-    return filings_df.groupby([SOURCE_ID_COL, FILING_MANAGER_CIK_COL, FILING_MANAGER_NAME_COL, REPORT_PERIOD_COL,
+    return filings_df.groupby([SOURCE_ID_COL, FILING_MANAGER_CIK_COL, FILING_MANAGER_ADDRESS_COL, FILING_MANAGER_NAME_COL, REPORT_PERIOD_COL,
                                COMPANY_CUSIP6_COL, COMPANY_CUSIP_COL]) \
-        .agg({COMPANY_NAME_COL: 'first', VALUE_COL: sum, SHARES_COL: sum}).reset_index()
+        .agg({COMPANY_NAME_COL: 'first', VALUE_COL: "sum", SHARES_COL: "sum"}).reset_index()
 
 
 def filter_data(filings_df: pd.DataFrame, top_n_periods: int) -> pd.DataFrame:

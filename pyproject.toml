@@ -18,6 +18,7 @@ graphdatascience = "^1.8"
 openai = "^1.6.1"
 tiktoken = "^0.5.2"
 progress = "^1.6"
+neo4j = "^5.16.0"
 
 
 [tool.poetry.group.dev.dependencies]
