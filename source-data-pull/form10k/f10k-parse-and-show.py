@@ -16,7 +16,7 @@ def main() -> int:
 
     url_df = get_cik_url_df(args.input_file)
 
-    print(f'Found {url_df.shape[0]:,} companies to pull filings for')
+    print(f'Found {url_df.shape[0]:,} companies to pull filings for, as listed in {args.input_file}')
 
     count = 0
     total = url_df.shape[0]

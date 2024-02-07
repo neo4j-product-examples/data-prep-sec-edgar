@@ -40,7 +40,6 @@ def main() -> int:
     cik_df['form10KUrls'] = urls_list
     urls_df = cik_df[cik_df.form10KUrls.map(len) > 0].explode(column='form10KUrls')
     Path(output_dir).mkdir(parents=True, exist_ok=True)
-    urls_df.rename(columns={'name','names'}) 
     urls_df.to_csv(args.output_file, index=False)
     return 0
 

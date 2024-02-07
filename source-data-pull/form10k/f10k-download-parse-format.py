@@ -37,7 +37,7 @@ def main() -> int:
         if len(raw_file_path) > 0:
             output_file_path = os.path.join(output_dir, file_id + '.json')
             try:
-                load_parse_save(raw_file_path, output_file_path, row.cik, row.cusip6, row.form10KUrls, toList[row.cusip], toList[row.names])
+                load_parse_save(raw_file_path, output_file_path, row.cik, row.cusip6, row.form10KUrls, toList(row.cusip), toList(row.names))
                 os.remove(raw_file_path)
             except Exception as e:
                 print(e)
